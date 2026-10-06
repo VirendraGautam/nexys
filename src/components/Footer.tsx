@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Truck, RefreshCw, Cpu } from 'lucide-react';
+import { ShieldCheck, Truck, RefreshCw, Cpu, Download } from 'lucide-react';
 import { ProductCategory } from '../types';
 
 interface FooterProps {
@@ -127,11 +127,29 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
 
           <div>
-            <h5 className="font-semibold text-white text-xs uppercase tracking-wider mb-3">Company</h5>
+            <h5 className="font-semibold text-white text-xs uppercase tracking-wider mb-3">Deploy & Download</h5>
             <ul className="space-y-2 text-xs">
-              <li><span className="text-slate-400">Design Philosophy</span></li>
-              <li><span className="text-slate-400">Sustainability & Aluminum</span></li>
-              <li><span className="text-slate-400">Press Kit</span></li>
+              <li>
+                <a 
+                  href="/nexus-store-source.zip" 
+                  download="nexus-store-source.zip" 
+                  className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Source (.zip)</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/nexus-store-dist.zip" 
+                  download="nexus-store-dist.zip" 
+                  className="text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Netlify Build (.zip)</span>
+                </a>
+              </li>
+              <li><span className="text-slate-400">Netlify Ready (netlify.toml)</span></li>
               <li><span className="text-slate-400">Security & TLS Protocol</span></li>
             </ul>
           </div>

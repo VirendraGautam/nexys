@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Radio, RefreshCw, Smartphone, Monitor, Search } from 'lucide-react';
+import { ShoppingBag, Radio, RefreshCw, Smartphone, Monitor, Search, Download } from 'lucide-react';
 import { ProductCategory } from '../types';
 
 interface NavbarProps {
@@ -49,6 +49,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-xs">
+          <a
+            href="/nexus-store-source.zip"
+            download="nexus-store-source.zip"
+            title="Download complete project source code as ZIP"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60 font-medium transition-colors cursor-pointer text-[11px]"
+          >
+            <Download className="w-3 h-3 text-cyan-300" />
+            <span>Download ZIP</span>
+          </a>
           <button
             onClick={onSimulateActivity}
             disabled={isSimulating}
@@ -56,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors cursor-pointer text-[11px]"
           >
             <Radio className="w-3 h-3 text-cyan-400" />
-            <span>Simulate Live Demand</span>
+            <span>Simulate Demand</span>
           </button>
           <button
             onClick={onRestock}
