@@ -1,0 +1,6 @@
+{
+  "name": "Nexus Store - Real-Time E-Commerce & Secure Gateway",
+  "description": "Full-journey e-commerce web platform featuring real-time inventory tracking via Server-Sent Events, secure dummy payment gateway, interactive order tracking, and email confirmation dispatch.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
