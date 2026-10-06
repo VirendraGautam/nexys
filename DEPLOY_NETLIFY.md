@@ -1,67 +1,55 @@
 # Deploying Nexus Store to Netlify
 
-This guide details how to deploy the **Nexus Store** web application to **Netlify** with zero configuration required.
+This guide explains how to deploy the **Nexus Store** web application to **Netlify** without any build or publishing errors.
 
 ---
 
-## ⚡ Quick Deployment (Recommended: GitHub / Git)
+## 🛠️ Root Causes of Netlify Failures & How They Were Fixed
 
-### Step 1: Push Code to GitHub / GitLab / Bitbucket
-Push your project repository to your Git provider of choice.
+If your deployment previously failed on Netlify, it was due to one of three common issues (now completely resolved):
 
-### Step 2: Connect Repository in Netlify
+1. **`npm install` Peer Dependency Conflict (`ERESOLVE`)**:
+   - **Fix**: Removed the conflicting `esbuild@^0.25.0` pin, added `.npmrc` with `legacy-peer-deps=true`, added `NPM_FLAGS = "--legacy-peer-deps"` in `netlify.toml`, and generated a clean `package-lock.json`.
+2. **ESM `__dirname` ReferenceError in `vite.config.ts`**:
+   - **Fix**: Replaced Node CommonJS `__dirname` with standard ESM `fileURLToPath(new URL('.', import.meta.url))` to ensure compatibility with Node 20/22 on Netlify.
+3. **Netlify Drop Missing Root `index.html`**:
+   - **Fix**: Repackaged `nexus-store-dist.zip` so `index.html`, `_redirects`, and `assets/` are located at the **archive root**, allowing Netlify Drop to recognize the site immediately.
+
+---
+
+## 🚀 Option 1: Instant Drag & Drop via Netlify Drop (Fastest, No Git Required)
+
+1. Download the updated **[`nexus-store-dist.zip`](/nexus-store-dist.zip)** archive.
+2. Go to **[app.netlify.com/drop](https://app.netlify.com/drop)**.
+3. Drag and drop the `nexus-store-dist.zip` file directly into the drop zone (or extract it and drag the folder).
+4. Netlify will deploy it in seconds and generate your live URL!
+
+---
+
+## 🌐 Option 2: Deploy from GitHub / GitLab / Bitbucket
+
+If you prefer continuous deployment from Git:
+
+### Step 1: Push Code to Git
+Push your project files (including `package-lock.json`, `.npmrc`, and `netlify.toml`).
+
+### Step 2: Import into Netlify
 1. Log in to [Netlify](https://app.netlify.com/).
 2. Click **"Add new site"** → **"Import an existing project"**.
 3. Select your repository.
 
-### Step 3: Verify Build Settings
-The repository includes a pre-configured `netlify.toml` file, so Netlify will auto-detect these settings:
+### Step 3: Deployment Settings (Auto-Detected)
+Netlify will auto-detect `netlify.toml`:
 - **Build command**: `npm run build`
 - **Publish directory**: `dist`
-- **Node version**: `20` (specified in `netlify.toml`)
+- **Node Version**: `20`
+- **NPM Flags**: `--legacy-peer-deps`
 
-Click **"Deploy Nexus Store"**. Your site will build in ~30 seconds and receive a live URL (`https://your-site-name.netlify.app`).
-
----
-
-## 🚀 Alternative: Deploy via Netlify CLI
-
-If you prefer deploying from your terminal:
-
-```bash
-# 1. Install Netlify CLI globally
-npm install -g netlify-cli
-
-# 2. Build the project
-npm run build
-
-# 3. Deploy to Netlify
-netlify deploy --prod --dir=dist
-```
+Click **"Deploy Nexus Store"**.
 
 ---
 
-## 📂 Alternative: Drag & Drop Manual Deploy
-
-1. Run `npm run build` locally in your terminal.
-2. Go to [Netlify Drop](https://app.netlify.com/drop).
-3. Drag and drop the generated `dist/` folder into the drop zone.
-
----
-
-## 🛡️ Netlify Features Configured
-
-1. **SPA Routing Support (`public/_redirects` & `netlify.toml`)**:
-   All deep routes and refreshes automatically resolve to `/index.html` with HTTP 200 to prevent 404 errors.
-
-2. **Full-Journey Simulation on Netlify CDN**:
-   - Real-time inventory tracking and synchronization.
-   - Low-stock badges and out-of-stock validation.
-   - Dummy payment gateway with test card simulations (`4242...` for approval, `0002` for decline).
-   - Live order tracking and interactive delivery milestone advancement.
-   - Transactional email confirmation viewer.
-   - `localStorage` persistence across page reloads.
-
-3. **Security Headers**:
-   - `X-Content-Type-Options: nosniff`
-   - `Referrer-Policy: strict-origin-when-cross-origin`
+## ⚙️ Netlify Features Enabled
+- **SPA Routing**: `public/_redirects` and `netlify.toml` route all requests to `/index.html` with status 200.
+- **Client Fallback Engine**: If the backend is hosted statically, `src/services/nexusService.ts` provides persistent local storage for real-time stock counters, order tracking, and payment simulation.
+- **Security Headers**: Enforced via `netlify.toml`.
