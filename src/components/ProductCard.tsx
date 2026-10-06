@@ -1,20 +1,24 @@
 import React from 'react';
 import { Product } from '../types';
 import { ProductVisual } from './ProductVisual';
-import { Star, Plus, Check } from 'lucide-react';
+import { Star, Plus, Check, Heart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
   onSelect: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   isInCart?: boolean;
+  isWishlisted?: boolean;
+  onToggleWishlist?: (productId: string) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onSelect,
   onAddToCart,
-  isInCart = false
+  isInCart = false,
+  isWishlisted = false,
+  onToggleWishlist
 }) => {
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 4;
@@ -33,7 +37,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         />
 
         {/* Live Stock Notification Ribbon/Tag */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs">
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs z-10">
           {isOutOfStock ? (
             <span className="bg-rose-950/80 text-rose-300 border border-rose-800/50 text-[11px] font-medium px-2 py-0.5 rounded">
               Out of Stock
@@ -53,9 +57,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Optional Flagship badge */}
         {product.badge && !isOutOfStock && !isLowStock && (
-          <div className="absolute top-3 right-3 text-[11px] font-mono text-indigo-300 bg-indigo-950/80 border border-indigo-800/50 px-2 py-0.5 rounded">
+          <div className="absolute top-3 right-12 text-[11px] font-mono text-indigo-300 bg-indigo-950/80 border border-indigo-800/50 px-2 py-0.5 rounded z-10">
             {product.badge}
           </div>
+        )}
+
+        {/* Wishlist Heart Toggle Button */}
+        {onToggleWishlist && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWishlist(product.id);
+            }}
+            aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            className={`absolute top-2.5 right-2.5 z-20 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer shadow-lg ${
+              isWishlisted
+                ? 'bg-rose-950/90 border border-rose-500/70 text-rose-400 hover:bg-rose-900 scale-105'
+                : 'bg-slate-900/80 border border-slate-700/70 text-slate-400 hover:text-rose-400 hover:bg-slate-800 hover:scale-110'
+            }`}
+          >
+            <Heart 
+              className={`w-4 h-4 transition-colors ${
+                isWishlisted ? 'fill-rose-500 text-rose-500' : ''
+              }`} 
+            />
+          </button>
         )}
       </div>
 

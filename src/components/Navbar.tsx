@@ -1,19 +1,19 @@
 import React from 'react';
-import { ShoppingBag, Radio, RefreshCw, Smartphone, Monitor, Search, Download } from 'lucide-react';
+import { ShoppingBag, Radio, RefreshCw, Search, Heart } from 'lucide-react';
 import { ProductCategory } from '../types';
 
 interface NavbarProps {
   activeCategory: ProductCategory;
   onSelectCategory: (category: ProductCategory) => void;
   cartCount: number;
+  wishlistCount?: number;
+  onOpenWishlist?: () => void;
   onOpenCart: () => void;
   onOpenTracking: () => void;
   isSseConnected: boolean;
   onSimulateActivity: () => void;
   onRestock: () => void;
   isSimulating: boolean;
-  mobileViewActive: boolean;
-  onToggleMobileView: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }
@@ -22,14 +22,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeCategory,
   onSelectCategory,
   cartCount,
+  wishlistCount = 0,
+  onOpenWishlist,
   onOpenCart,
   onOpenTracking,
   isSseConnected,
   onSimulateActivity,
   onRestock,
   isSimulating,
-  mobileViewActive,
-  onToggleMobileView,
   searchQuery,
   onSearchChange
 }) => {
@@ -49,15 +49,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-xs">
-          <a
-            href="/nexus-store-source.zip"
-            download="nexus-store-source.zip"
-            title="Download complete project source code as ZIP"
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60 font-medium transition-colors cursor-pointer text-[11px]"
-          >
-            <Download className="w-3 h-3 text-cyan-300" />
-            <span>Download ZIP</span>
-          </a>
           <button
             onClick={onSimulateActivity}
             disabled={isSimulating}
@@ -175,15 +166,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             Track Order
           </button>
 
-          {/* Mobile Shell Mode Toggle */}
-          <button
-            onClick={onToggleMobileView}
-            title={mobileViewActive ? "Switch to Desktop Layout" : "View as Nexus Mobile App"}
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800 rounded-lg transition-colors cursor-pointer"
-          >
-            {mobileViewActive ? <Monitor className="w-3.5 h-3.5 text-indigo-400" /> : <Smartphone className="w-3.5 h-3.5 text-indigo-400" />}
-            <span className="text-[11px]">{mobileViewActive ? "Desktop View" : "Mobile App Frame"}</span>
-          </button>
+          {/* Wishlist Button */}
+          {onOpenWishlist && (
+            <button
+              onClick={onOpenWishlist}
+              aria-label={`Wishlist with ${wishlistCount} saved items`}
+              title="View Wishlist"
+              className={`relative flex items-center justify-center p-2 rounded-lg border transition-all cursor-pointer ${
+                wishlistCount > 0
+                  ? 'bg-rose-950/30 border-rose-500/50 text-rose-400 hover:bg-rose-950/60'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-800'
+              }`}
+            >
+              <Heart className={`w-4 h-4 transition-colors ${wishlistCount > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0c0d12]">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Shopping Bag Button */}
           <button

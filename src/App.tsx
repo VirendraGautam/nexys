@@ -16,7 +16,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { 
   Filter, SlidersHorizontal, ArrowUpDown, Radio, RefreshCw, 
-  Smartphone, Monitor, PackageCheck, AlertCircle, ShoppingBag 
+  PackageCheck, AlertCircle, ShoppingBag, Heart 
 } from 'lucide-react';
 import { NexusAPI, netlifyEngine } from './services/nexusService';
 
@@ -27,6 +27,17 @@ export default function App() {
   const [isSseConnected, setIsSseConnected] = useState(false);
   const [recentActivity, setRecentActivity] = useState<string[]>([]);
   const [isSimulating, setIsSimulating] = useState(false);
+
+  // Wishlist state
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('nexus_wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showWishlistOnly, setShowWishlistOnly] = useState(false);
 
   // Filter & Search states
   const [activeCategory, setActiveCategory] = useState<ProductCategory>('all');
@@ -49,8 +60,6 @@ export default function App() {
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [trackingOrderNumber, setTrackingOrderNumber] = useState('NX-784201');
 
-  // Mobile App Frame Simulation Mode
-  const [mobileViewActive, setMobileViewActive] = useState(false);
   const [mobileTab, setMobileTab] = useState<'shop' | 'search' | 'cart' | 'orders'>('shop');
 
   // Notification Banner Toast
@@ -243,6 +252,26 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
+  // Wishlist toggle handler
+  const handleToggleWishlist = (productId: string) => {
+    const prod = products.find(p => p.id === productId);
+    const prodName = prod ? prod.name : 'Item';
+    setWishlist(prev => {
+      let next: string[];
+      if (prev.includes(productId)) {
+        next = prev.filter(id => id !== productId);
+        showToast(`Removed ${prodName} from your wishlist.`, 'info');
+      } else {
+        next = [...prev, productId];
+        showToast(`Added ${prodName} to your wishlist!`, 'success');
+      }
+      try {
+        localStorage.setItem('nexus_wishlist', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
   // Order Success & Modals Flow
   const handleOrderSuccess = (order: Order) => {
     setCart([]);
@@ -297,6 +326,11 @@ export default function App() {
       result = result.filter(p => p.stock > 0);
     }
 
+    // Wishlist Only
+    if (showWishlistOnly) {
+      result = result.filter(p => wishlist.includes(p.id));
+    }
+
     // Sorting
     if (sortBy === 'price-asc') {
       result.sort((a, b) => a.price - b.price);
@@ -309,13 +343,12 @@ export default function App() {
     }
 
     return result;
-  }, [products, activeCategory, searchQuery, inStockOnly, sortBy]);
+  }, [products, activeCategory, searchQuery, inStockOnly, showWishlistOnly, wishlist, sortBy]);
 
   const featuredProduct = products.find(p => p.id === 'prod-aura-100') || products[0];
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // App Content renderer
-  const renderAppContent = () => (
+  return (
     <div className="min-h-screen flex flex-col bg-[#0c0d12] text-slate-100 selection:bg-indigo-500/30">
       {/* Real-time Toast Alert */}
       {liveToast && (
@@ -340,14 +373,18 @@ export default function App() {
           setMobileTab('shop');
         }}
         cartCount={totalCartCount}
+        wishlistCount={wishlist.length}
+        onOpenWishlist={() => {
+          setShowWishlistOnly(prev => !prev);
+          const el = document.getElementById('catalog-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenTracking={() => handleOpenTrackingModal()}
         isSseConnected={isSseConnected}
         onSimulateActivity={handleSimulateActivity}
         onRestock={handleRestock}
         isSimulating={isSimulating}
-        mobileViewActive={mobileViewActive}
-        onToggleMobileView={() => setMobileViewActive(!mobileViewActive)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -364,7 +401,7 @@ export default function App() {
         )}
 
         {/* Catalog Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+        <section id="catalog-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           {/* Section Header with Category Label and Filter Controls */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-slate-800">
             <div>
@@ -376,7 +413,8 @@ export default function App() {
                 </span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {activeCategory === 'all' ? 'All Engineered Hardware' :
+                {showWishlistOnly ? 'My Saved Wishlist' :
+                 activeCategory === 'all' ? 'All Engineered Hardware' :
                  activeCategory === 'audio' ? 'Studio Acoustics & Audio' :
                  activeCategory === 'workspace' ? 'Minimalist Workspace Gear' :
                  activeCategory === 'wearables' ? 'Titanium Chronos Wearables' : 'Optics & Studio Lighting'}
@@ -385,6 +423,19 @@ export default function App() {
 
             {/* Filter & Sort Controls */}
             <div className="flex flex-wrap items-center gap-3 text-xs">
+              {/* Wishlist Favorites Toggle */}
+              <button
+                onClick={() => setShowWishlistOnly(!showWishlistOnly)}
+                className={`px-3 py-1.5 rounded-lg border font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                  showWishlistOnly
+                    ? 'border-rose-500 bg-rose-950/40 text-rose-300'
+                    : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${showWishlistOnly ? 'fill-rose-400 text-rose-400' : 'text-slate-400'}`} />
+                <span>Favorites ({wishlist.length})</span>
+              </button>
+
               {/* In-Stock Only Toggle */}
               <button
                 onClick={() => setInStockOnly(!inStockOnly)}
@@ -420,14 +471,20 @@ export default function App() {
           </div>
 
           {/* Active Search / Filter Indicator */}
-          {searchQuery && (
+          {(searchQuery || showWishlistOnly) && (
             <div className="mt-4 flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-300">
-              <span>Showing search results for: <strong className="text-white">"{searchQuery}"</strong></span>
+              <span>
+                {showWishlistOnly && <span className="text-rose-400 font-semibold mr-2">Showing Saved Wishlist ({filteredProducts.length} items)</span>}
+                {searchQuery && <span>Search: <strong className="text-white">"{searchQuery}"</strong></span>}
+              </span>
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowWishlistOnly(false);
+                }}
                 className="text-indigo-400 hover:text-indigo-300 underline font-medium cursor-pointer"
               >
-                Clear Search
+                Reset Filters
               </button>
             </div>
           )}
@@ -443,19 +500,24 @@ export default function App() {
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16 px-4 rounded-2xl border border-slate-800 bg-slate-900/30 space-y-3">
                 <AlertCircle className="w-8 h-8 text-slate-500 mx-auto" />
-                <h3 className="font-semibold text-white text-base">No hardware found</h3>
+                <h3 className="font-semibold text-white text-base">
+                  {showWishlistOnly ? 'Your wishlist is currently empty' : 'No hardware found'}
+                </h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Try adjusting your search criteria or toggling off the "In Stock Only" filter.
+                  {showWishlistOnly
+                    ? 'Click the heart icon on any product card to save items to your wishlist for quick access.'
+                    : 'Try adjusting your search criteria or toggling off the In Stock Only filter.'}
                 </p>
                 <button
                   onClick={() => {
                     setActiveCategory('all');
                     setSearchQuery('');
                     setInStockOnly(false);
+                    setShowWishlistOnly(false);
                   }}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium cursor-pointer"
                 >
-                  Reset All Filters
+                  {showWishlistOnly ? 'Browse All Hardware' : 'Reset All Filters'}
                 </button>
               </div>
             ) : (
@@ -467,6 +529,8 @@ export default function App() {
                     onSelect={setSelectedProduct}
                     onAddToCart={(p) => handleAddToCart(p, 1)}
                     isInCart={cart.some(item => item.productId === product.id)}
+                    isWishlisted={wishlist.includes(product.id)}
+                    onToggleWishlist={handleToggleWishlist}
                   />
                 ))}
               </div>
@@ -617,42 +681,4 @@ export default function App() {
       />
     </div>
   );
-
-  // If user toggled "Mobile App Frame Mode", wrap the entire app inside a realistic Nexus Store mobile app device shell
-  if (mobileViewActive) {
-    return (
-      <div className="min-h-screen bg-[#08090d] flex flex-col items-center justify-center p-4 sm:p-8">
-        {/* Device frame header bar with toggle back */}
-        <div className="w-full max-w-sm mb-4 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-indigo-400" />
-            <span className="font-semibold text-white">Nexus Store Mobile App Simulation</span>
-          </div>
-          <button
-            onClick={() => setMobileViewActive(false)}
-            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1"
-          >
-            <Monitor className="w-3 h-3" />
-            <span>Switch to Web Desktop</span>
-          </button>
-        </div>
-
-        {/* Simulated Phone Chassis */}
-        <div className="relative w-full max-w-[390px] h-[844px] bg-[#0c0d12] rounded-[48px] border-[8px] border-[#222533] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col ring-1 ring-slate-700/50">
-          {/* Speaker / Dynamic Island notch */}
-          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-full z-50 flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-900 mr-2" />
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-950" />
-          </div>
-
-          {/* Simulated App Viewport */}
-          <div className="flex-1 overflow-y-auto pt-6 pb-16">
-            {renderAppContent()}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return renderAppContent();
 }
